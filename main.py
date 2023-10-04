@@ -1,25 +1,37 @@
 from tkinter import *
 import random
 import pandas
-import time
 BACKGROUND_COLOR = "#B1DDC6"
 FONT_NAME = "Ariel"
 
-
-data = pandas.read_csv("data/french_words.csv")
-words_dict = data.to_dict(orient="records")
-
 word_pair = {}
+words_to_learn = {}
+
+try:
+    data = pandas.read_csv("data/words_to_learn.csv")
+except FileNotFoundError:
+    original_data = pandas.read_csv("data/french_words.csv")
+    words_to_learn = original_data.to_dict(orient="records")
+else:
+    words_to_learn = data.to_dict(orient="records")
+
 
 
 def next_word():
     global word_pair, flip_timer
     window.after_cancel(flip_timer)
-    word_pair = random.choice(words_dict)
+    word_pair = random.choice(words_to_learn)
     canvas.itemconfig(card_title, text="French", fill="black")
     canvas.itemconfig(card_text, text=word_pair["French"], fill="black")
     canvas.itemconfig(card_background, image=front_card_img)
     flip_timer = window.after(3000, func=flip_card)
+
+
+def is_known():
+    words_to_learn.remove(word_pair)
+    new_data = pandas.DataFrame(words_to_learn)
+    new_data.to_csv("data/words_to_learn.csv", index=False)
+    next_word()
 
 
 def flip_card():
@@ -50,7 +62,7 @@ canvas.grid(column=0, row=0, columnspan=2)
 
 
 right_img = PhotoImage(file="images/right.png")
-right_button = Button(image=right_img, highlightthickness=0, command=next_word)
+right_button = Button(image=right_img, highlightthickness=0, command=is_known)
 right_button.grid(column=1, row=1)
 
 
